@@ -1,4 +1,4 @@
-from sigchain.stores import MemoryStore
+from public_keys.sigchain.stores import MemoryStore
 
 
 def test_MemoryStore_adder() -> None:

@@ -1,4 +1,4 @@
-from keyring.file_system_for_testing import InMemoryTestingRing
+from public_keys.keyring.file_system_for_testing import InMemoryTestingRing
 
 
 def test_InMemoryTestingRing() -> None:

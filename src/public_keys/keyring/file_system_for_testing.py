@@ -1,4 +1,4 @@
-from keyring.core import Keyring
+from public_keys.keyring.core import Keyring
 
 
 class InMemoryTestingRing(dict, Keyring):

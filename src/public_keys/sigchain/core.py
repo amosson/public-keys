@@ -9,7 +9,7 @@ from nacl.exceptions import BadSignatureError  # type: ignore
 from nacl.utils import random  # type: ignore
 from nacl.signing import SigningKey, VerifyKey  # type: ignore
 
-from sigchain.stores import Store
+from public_keys.sigchain.stores import Store
 
 
 class Authority:

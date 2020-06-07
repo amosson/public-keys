@@ -2,8 +2,8 @@ import hashlib
 
 from nacl.signing import SigningKey
 
-from sigchain.core import SigChain, create_device_and_add_to_chain, sign_kid_and_add_to_chain
-from sigchain.stores import MemoryStore
+from public_keys.sigchain.core import SigChain, create_device_and_add_to_chain, sign_kid_and_add_to_chain
+from public_keys.sigchain.stores import MemoryStore
 
 
 def test_SigChainBasic() -> None:
