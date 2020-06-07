@@ -143,9 +143,6 @@ class SigChain:
         return len(self.raw_chain)
 
 
-# In[12]:
-
-
 def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kind: str) -> Optional[SigningKey]:
     did = random().hex()
     sk = SigningKey.generate()
@@ -158,6 +155,7 @@ def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kin
         chain.store.adder(signed)
         chain.raw_chain.append(signed)
         chain.data_chain.append(entry.as_dict())
+        chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
         kid = sk.verify_key.encode().hex()
         chain.devices[kid] = Device(did, kid, name, kind)
         return sk
@@ -175,6 +173,8 @@ def sign_kid_and_add_to_chain(chain: SigChain, kid: str, sk: SigningKey, account
         chain.store.adder(signed)
         chain.raw_chain.append(signed)
         chain.data_chain.append(entry.as_dict())
+        chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
+        chain.devices[kid].signed_by_kid = sk.verify_key.encode().hex()
 
 
 class Entry:
