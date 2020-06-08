@@ -5,6 +5,6 @@ setup(
     name="public_keychain",
     version="0.1",
     package_dir={"": "src"},
-    packages=find_packages(),
+    packages=find_packages(where='src'),
     python_requires=">=3.8.0",
 )

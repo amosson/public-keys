@@ -1,13 +1,13 @@
 import base64
-from dataclasses import dataclass
-import json
 import hashlib
-from typing import Optional, List, Mapping, Tuple, MutableMapping
+import json
+from dataclasses import dataclass
+from typing import List, Mapping, MutableMapping, Optional, Tuple
 
 import nacl  # type: ignore
 from nacl.exceptions import BadSignatureError  # type: ignore
-from nacl.utils import random  # type: ignore
 from nacl.signing import SigningKey, VerifyKey  # type: ignore
+from nacl.utils import random  # type: ignore
 
 from public_keys.sigchain.stores import Store
 
@@ -122,7 +122,7 @@ class SigChain:
 
         Note: the consumer may not easily type check against this type of structure
         """
-        assert prev_hash is not None  # Type is Optional to allow for return but should never be called with None
+        assert prev_hash is not None  # Deal with return None param # noqa: S101
 
         decoded_entry = base64.b64decode(entry)
         data = json.loads(decoded_entry[64:])

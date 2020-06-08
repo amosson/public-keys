@@ -1,4 +1,4 @@
-from typing import Iterable, Generator, Protocol
+from typing import Generator, Iterable, Protocol
 
 
 class Store(Protocol):

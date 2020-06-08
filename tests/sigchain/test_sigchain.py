@@ -1,8 +1,12 @@
 import hashlib
 
-from nacl.signing import SigningKey
+# from nacl.signing import SigningKey
 
-from public_keys.sigchain.core import SigChain, create_device_and_add_to_chain, sign_kid_and_add_to_chain
+from public_keys.sigchain.core import (
+    SigChain,
+    create_device_and_add_to_chain,
+    sign_kid_and_add_to_chain,
+)
 from public_keys.sigchain.stores import MemoryStore
 
 
@@ -48,9 +52,11 @@ def test_devices_two() -> None:
     sc = SigChain(ms)
 
     key1 = create_device_and_add_to_chain(sc, "name 1", "account 1", "test type 1")
-    kid1 = key1.verify_key.encode().hex()
+    if key1 is not None:
+        kid1 = key1.verify_key.encode().hex()
     key2 = create_device_and_add_to_chain(sc, "name 2", "account 1", "test type 1")
-    kid2 = key2.verify_key.encode().hex()
+    if key2 is not None:
+        kid2 = key2.verify_key.encode().hex()
     d1 = sc.devices[kid1]
     d2 = sc.devices[kid2]
 
@@ -81,6 +87,7 @@ def test_prev_hash_matches_hash_of_last_entry() -> None:
     sc = SigChain(ms)
 
     key = create_device_and_add_to_chain(sc, "name 1", "account 1", "test type 1")
+    assert key
 
     assert hashlib.sha256(bytes(sc.raw_chain[0], "utf-8")).hexdigest() == sc.prev_hash
 
