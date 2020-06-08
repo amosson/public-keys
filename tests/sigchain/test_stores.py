@@ -8,5 +8,6 @@ def test_MemoryStore_adder() -> None:
     assert len(ms.entries) == 1
     assert ms.entries[0] == "an entry"
 
+
 def test_true() -> None:
     assert True
