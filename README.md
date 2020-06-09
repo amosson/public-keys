@@ -1,4 +1,4 @@
-[![Tests](https://github.com/<your-username>/hypermodern-python/workflows/Tests/badge.svg)](https://github.com/<your-username>/hypermodern-python/actions?workflow=Tests)
+[![Tests](https://github.com/amosson/public-keys/workflows/Tests/badge.svg)](https://github.com/amosson/public-keys/actions?workflow=Tests)
 
 # public-keys
 As a young programmer, I thought PGP was interentesting, if not for communications (none of my friends could ever be bothered - this was a differnet time), then for keeping files safe on my local machines.  Of course, like many, this quickly became operationally difficult as I could never remember PGP "Passphrase".
