@@ -27,7 +27,6 @@ black = "^19.10b0"
 flake8-bandit = "^2.1.2"
 mypy = "^0.780"
 isort = "^4.3.21"
-flake8-isort = "^3.0.0"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]

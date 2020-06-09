@@ -1,13 +1,24 @@
+import base64
 import hashlib
+import json
 
-# from nacl.signing import SigningKey
+import nacl  # type: ignore
+from nacl.signing import SigningKey, VerifyKey  # type: ignore
 
-from public_keys.sigchain.core import (
-    SigChain,
-    create_device_and_add_to_chain,
-    sign_kid_and_add_to_chain,
-)
+from public_keys.sigchain.core import (AddDevice, Authority, Entry, SigChain,
+                                       create_device_and_add_to_chain,
+                                       sign_kid_and_add_to_chain)
 from public_keys.sigchain.stores import MemoryStore
+
+
+def test_manual_validation_add_device(initial_add_device) -> None:
+    decoded_entry = base64.b64decode(initial_add_device)
+    sig_bytes = decoded_entry[0:64]
+    message_bytes = decoded_entry[64:]
+    message = json.loads(message_bytes.decode("utf-8"))
+
+    vk = VerifyKey(message["authority"]["kid"], nacl.encoding.HexEncoder)
+    assert vk.verify(message_bytes, sig_bytes)
 
 
 def test_SigChainBasic() -> None:
@@ -125,3 +136,12 @@ def test_sign_device() -> None:
     d1 = sc.devices[kid1]
     d2 = sc.devices[kid2]
     assert d2.signed_by_kid == d1.signing_kid
+
+
+def test_manual_create_entry_has_initial_hash() -> None:
+    sk = SigningKey.generate()
+    a = Authority("test", sk)
+    d = AddDevice("test", "test kind", "123", sk)
+
+    e = Entry(d, a, 0)
+    assert e.prev == bytearray(32).hex()

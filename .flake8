@@ -1,7 +1,9 @@
 [flake8]
-max-line-length=119
+max-line-length=120
 select = B,B9,BLK,C,E,F,W,S,I
 max-complexity = 10
+application-import-names = public_keys,tests
+ignore = I201
 
 per-file-ignores =
 	test_*:S101

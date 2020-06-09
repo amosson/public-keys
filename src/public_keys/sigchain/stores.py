@@ -3,13 +3,13 @@ from typing import Generator, Iterable, Protocol
 
 class Store(Protocol):
     def loader(self) -> Generator[str, None, None]:
-        ...
+        ...  # pragma: no cover
 
     def storer(self, raw_chain: Iterable[str]) -> None:
-        ...
+        ...  # pragma: no cover
 
     def adder(self, entry: str) -> None:
-        ...
+        ...  # pragma: no cover
 
 
 class FileStore:

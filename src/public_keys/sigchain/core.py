@@ -23,16 +23,9 @@ class Authority:
             "username": self.username,
         }
 
-    def as_json(self):
-        return json.dumps(self.as_dict())
-
 
 class Statement:
-    def as_json(self):
-        return json.dumps(self.as_dict())
-
-    def as_base64(self):
-        return base64.b64encode(self.as_json())
+    pass
 
 
 @dataclass
@@ -102,9 +95,10 @@ class SigChain:
                 self.data_chain.append(entry_as_dict)
                 stmt = entry_as_dict["statement"]
                 stmt_keys = set(stmt.keys())
+                # Not using if ... elif ... because converage breaks - TODO: Fix this probably
                 if stmt_keys == ADD_DEVICE_KEYS:
                     self.devices[stmt["kid"]] = Device(stmt["device_id"], stmt["kid"], stmt["name"], stmt["kind"])
-                elif stmt_keys == SIGNED_KID_KEYS:
+                if stmt_keys == SIGNED_KID_KEYS:
                     self.devices[stmt["kid"]].signed_by_kid = entry_as_dict["authority"]["kid"]
             else:
                 self.error_entry = entry
@@ -143,7 +137,7 @@ class SigChain:
         return len(self.raw_chain)
 
 
-def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kind: str) -> Optional[SigningKey]:
+def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kind: str) -> SigningKey:
     did = random().hex()
     sk = SigningKey.generate()
     device = AddDevice(name, kind, did, sk)
@@ -151,16 +145,13 @@ def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kin
     entry = Entry(device, authority, len(chain), chain.prev_hash)
     signed = base64.b64encode(entry.sign()).decode()
 
-    if chain.is_valid():
-        chain.store.adder(signed)
-        chain.raw_chain.append(signed)
-        chain.data_chain.append(entry.as_dict())
-        chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
-        kid = sk.verify_key.encode().hex()
-        chain.devices[kid] = Device(did, kid, name, kind)
-        return sk
-
-    return None
+    chain.store.adder(signed)
+    chain.raw_chain.append(signed)
+    chain.data_chain.append(entry.as_dict())
+    chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
+    kid = sk.verify_key.encode().hex()
+    chain.devices[kid] = Device(did, kid, name, kind)
+    return sk
 
 
 def sign_kid_and_add_to_chain(chain: SigChain, kid: str, sk: SigningKey, account: str) -> None:
@@ -169,12 +160,11 @@ def sign_kid_and_add_to_chain(chain: SigChain, kid: str, sk: SigningKey, account
     entry = Entry(statement, authority, len(chain), chain.prev_hash)
     signed = base64.b64encode(entry.sign()).decode()
 
-    if chain.is_valid():
-        chain.store.adder(signed)
-        chain.raw_chain.append(signed)
-        chain.data_chain.append(entry.as_dict())
-        chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
-        chain.devices[kid].signed_by_kid = sk.verify_key.encode().hex()
+    chain.store.adder(signed)
+    chain.raw_chain.append(signed)
+    chain.data_chain.append(entry.as_dict())
+    chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
+    chain.devices[kid].signed_by_kid = sk.verify_key.encode().hex()
 
 
 class Entry:
