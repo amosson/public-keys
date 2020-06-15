@@ -3,7 +3,7 @@ import tempfile
 import nox
 from nox.sessions import Session
 
-nox.options.sessions = "lint", "tests", "safety"
+nox.options.sessions = "mypy", "lint", "tests", "safety"
 
 
 def install_with_constraints(session, *args, **kwargs):
@@ -60,3 +60,10 @@ def coverage(session: Session) -> None:
     install_with_constraints(session, "coverage[toml]", "codecov")
     session.run("coverage", "xml", "--fail-under=0")
     session.run("codecov", *session.posargs)
+
+
+@nox.session(python="3.8")
+def mypy(session):
+    args = session.posargs or locations
+    install_with_constraints(session, "mypy")
+    session.run("mypy", *args)
