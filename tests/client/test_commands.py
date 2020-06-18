@@ -2,7 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-from nacl.exceptions import CryptoError
+from nacl.exceptions import CryptoError  # type: ignore # noqa: I100
 
 from public_keys.client.commands import bootstrap
 
