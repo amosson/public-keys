@@ -1,8 +1,12 @@
 import hmac
+import json
 from hashlib import sha256
-from typing import Optional, Type
+from typing import BinaryIO, Optional, Type
 
 from nacl.public import PrivateKey  # type: ignore
+from nacl.pwhash.argon2i import MEMLIMIT_INTERACTIVE  # type: ignore
+from nacl.pwhash.argon2i import SALTBYTES, kdf
+from nacl.secret import SecretBox  # type: ignore
 from nacl.signing import SigningKey  # type: ignore
 from nacl.utils import random  # type: ignore
 
@@ -40,3 +44,27 @@ class Client:
         }
 
         self.keyring = keyring_cls(d)
+
+    def _store(self, password: str, openfile: BinaryIO) -> None:
+        d = {"id": self.id, "name": self.name}
+        salt = random(SALTBYTES)
+        sb = SecretBox(kdf(SecretBox.KEY_SIZE, bytes(password, "utf-8"), salt, memlimit=MEMLIMIT_INTERACTIVE))
+        openfile.write(salt)
+        openfile.write(sb.encrypt(bytes(json.dumps(d), "utf-8")))
+
+    def _load(self, password: str, openfile: BinaryIO) -> None:
+        salt = openfile.read(SALTBYTES)
+        data = openfile.read()
+        sb = SecretBox(kdf(SecretBox.KEY_SIZE, bytes(password, "utf-8"), salt, memlimit=MEMLIMIT_INTERACTIVE))
+        d = json.loads(sb.decrypt(data).decode("utf-8"))
+        self.id = d["id"]
+        self.name = d["name"]
+
+
+class PosixClient(Client):
+    __slots__ = ["client_loc", "keyring_type"]
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.client_loc: Optional[str] = None
+        self.keyring_type: Optional[str] = None

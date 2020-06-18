@@ -1,3 +1,6 @@
+from io import BytesIO
+
+from nacl.exceptions import CryptoError  # type: ignore
 from nacl.signing import SigningKey, VerifyKey  # type: ignore
 
 from public_keys.client.core import Client
@@ -31,3 +34,33 @@ def test_generate() -> None:
         assert vk.verify(signed)
     else:
         assert 1 == 0
+
+
+def test_store_load() -> None:
+    c = Client()
+    c.generate("test name", InMemoryTestingRing)
+    f = BytesIO()
+
+    c._store("password", f)
+
+    out = Client()
+    f.seek(0)
+    out._load("password", f)
+    assert out.id == c.id
+    assert out.name == c.name
+
+
+def test_store_load_wrong_password() -> None:
+    c = Client()
+    c.generate("test name", InMemoryTestingRing)
+    f = BytesIO()
+
+    c._store("password", f)
+
+    out = Client()
+    f.seek(0)
+    try:
+        out._load("password1", f)
+        assert 1 == 0
+    except CryptoError:
+        pass
