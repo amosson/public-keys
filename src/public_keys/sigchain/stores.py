@@ -1,4 +1,4 @@
-from typing import Generator, Iterable, Protocol
+from typing import Generator, Iterable, Optional, Protocol
 
 
 class Store(Protocol):
@@ -11,26 +11,32 @@ class Store(Protocol):
     def adder(self, entry: str) -> None:
         ...  # pragma: no cover
 
+    def location(self) -> str:
+        ...  # pragma: no cover
+
 
 class FileStore:
     def __init__(self, location: str):
-        self.location = location
+        self.loc = location
 
     def loader(self) -> Generator[str, None, None]:
-        with open(self.location, "r") as f:
+        with open(self.loc, "r") as f:
             for line in f:
                 yield line[:-1]
 
     def storer(self, raw_chain: Iterable[str]) -> None:
-        with open(self.location, "w") as f:
+        with open(self.loc, "w") as f:
             for entry in raw_chain:
                 f.write(entry)
                 f.write("\n")
 
     def adder(self, entry: str) -> None:
-        with open(self.location, "a") as f:
+        with open(self.loc, "a") as f:
             f.write(entry)
             f.write("\n")
+
+    def location(self) -> str:
+        return self.loc + "@localhost"
 
 
 class MemoryStore:
@@ -47,3 +53,18 @@ class MemoryStore:
 
     def adder(self, entry: str) -> None:
         self.entries.append(entry)
+
+    def location(self) -> str:
+        return "@inmemory"
+
+
+def create_store(loc: str, entities: Optional[Iterable[str]] = None) -> Store:
+    if loc.endswith("@localhost"):
+        return FileStore(loc[:-10])
+    if loc == "@inmemory":
+        ms = MemoryStore()
+        if entities is not None:
+            ms.storer(entities)
+        return ms
+
+    raise Exception("Unsupported Store Type: %s" % loc)
