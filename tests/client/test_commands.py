@@ -4,7 +4,9 @@ from tempfile import TemporaryDirectory
 import pytest
 from nacl.exceptions import CryptoError  # type: ignore # noqa: I100
 
+from public_keys.client import commands
 from public_keys.client.commands import bootstrap
+from public_keys.keyring.file_system_for_testing import InMemoryTestingRing
 
 
 def mock_getpass(p=None, stream=None) -> str:
@@ -21,6 +23,10 @@ class MockUnameInfo:
 
 def mock_os_uname():
     return MockUnameInfo
+
+
+def mock_in_memory_keyring():
+    return InMemoryTestingRing
 
 
 def test_bootstrap(monkeypatch) -> None:
@@ -96,3 +102,18 @@ def test_bootstrap_specify_directory(monkeypatch) -> None:
         loaded_wrong_loc = bootstrap()
         assert c.id != loaded_wrong_loc.id
         assert c.name == loaded_wrong_loc.name
+
+
+def test_keyring_save(monkeypatch) -> None:
+    monkeypatch.setattr("getpass.getpass", mock_getpass)
+    monkeypatch.setattr("os.uname", mock_os_uname)
+    monkeypatch.setattr(commands, "get_keyring", mock_in_memory_keyring)
+
+    with TemporaryDirectory() as home:
+        monkeypatch.setattr(Path, "home", lambda: Path(home))
+        c = bootstrap()
+        kr = c.keyring
+        if kr is not None:
+            assert len(kr) == 2
+        else:
+            assert 1 == 0
