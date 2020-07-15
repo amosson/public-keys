@@ -25,7 +25,7 @@ def get_keyring() -> Type[Keyring]:
     return InMemoryTestingRing
 
 
-def bootstrap(client_loc: Optional[os.PathLike] = None) -> Client:
+def bootstrap(client_loc: Optional[os.PathLike] = None, sigchain_loc: Optional[str] = None) -> Client:
     if os.name == "posix":
         client = PosixClient()
         if client_loc is None:
@@ -40,14 +40,14 @@ def bootstrap(client_loc: Optional[os.PathLike] = None) -> Client:
         try:
             with open(file_loc, "br") as bf:
                 client._load(pwd, bf)
+                client.keyring = get_keyring()()
         except FileNotFoundError:
             name = get_name()
-            client.generate(name, get_keyring())
+            client.generate(name, get_keyring(), sigchain_loc)
             Path(client_loc / DEFAULT_DIR).mkdir(exist_ok=True)
             with open(file_loc, "bw") as bf:
                 client._store(pwd, bf)
 
         return client
-
     else:
         raise Exception("Only currently implemented on POSIX")  # pragma: no cover

@@ -32,3 +32,26 @@ def test_iter() -> None:
 
     for k in a:
         assert k == KeyKind.UNKNOWN
+
+
+def test_classvars() -> None:
+    a = InMemoryTestingRing()
+
+    a[KeyKind.UNKNOWN] = [Key(KeyKind.UNKNOWN, b"a", b"b")]
+    assert a[KeyKind.UNKNOWN][0].pub == b"b"
+
+    b = InMemoryTestingRing()
+    assert b[KeyKind.UNKNOWN][0].pub == b"b"
+
+
+def test_classvars_after_create_with_dict() -> None:
+    d = {KeyKind.UNKNOWN: [Key(KeyKind.UNKNOWN, b"a", b"b")]}
+    a = InMemoryTestingRing(d)
+    assert len(a) == 1
+
+    for k in a:
+        assert k == KeyKind.UNKNOWN
+
+    b = InMemoryTestingRing()
+    assert len(b) == 1
+    assert b[KeyKind.UNKNOWN][0].pub == b"b"

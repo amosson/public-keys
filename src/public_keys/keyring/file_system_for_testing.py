@@ -4,10 +4,12 @@ from public_keys.keyring.core import Key, KeyKind, Keyring
 
 
 class InMemoryTestingRing(Keyring):
+    dict: MutableMapping[KeyKind, List[Key]] = {}
+
     def __init__(self, d: Optional[MutableMapping[KeyKind, List[Key]]] = None) -> None:
-        if d is None:
-            d = {}
-        self.dict = d
+        if d is not None:
+            self.__class__.__dict__["dict"].clear()
+            self.__class__.__dict__["dict"].update(d)
 
     def lock(self, password: str) -> None:
         pass

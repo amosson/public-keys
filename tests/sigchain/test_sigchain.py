@@ -108,9 +108,11 @@ def test_sign_device() -> None:
     sc = SigChain(ms)
 
     key1 = create_device_and_add_to_chain(sc, "name 1", "account 1", "test type 1")
-    kid1 = key1.verify_key.encode().hex()
+    if key1 is not None:
+        kid1 = key1.verify_key.encode().hex()
     key2 = create_device_and_add_to_chain(sc, "name 2", "account 1", "test type 1")
-    kid2 = key2.verify_key.encode().hex()
+    if key2 is not None:
+        kid2 = key2.verify_key.encode().hex()
     d1 = sc.devices[kid1]
     d2 = sc.devices[kid2]
 
@@ -145,3 +147,15 @@ def test_manual_create_entry_has_initial_hash() -> None:
 
     e = Entry(d, a, 0)
     assert e.prev == bytearray(32).hex()
+
+
+def test_create_with_sk_and_did() -> None:
+    ms = MemoryStore()
+    sc = SigChain(ms)
+    sk = SigningKey.generate()
+    did = nacl.utils.random().hex()
+
+    key = create_device_and_add_to_chain(sc, "name 1", "account 1", "test type 1", sk, did)
+    assert key is None
+    assert sc.data_chain[0]["statement"]["device_id"] == did
+    assert list(sc.devices.values())[0].device_id == did

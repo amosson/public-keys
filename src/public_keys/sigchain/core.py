@@ -137,9 +137,16 @@ class SigChain:
         return len(self.raw_chain)
 
 
-def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kind: str) -> SigningKey:
-    did = random().hex()
-    sk = SigningKey.generate()
+def create_device_and_add_to_chain(
+    chain: SigChain, name: str, account: str, kind: str, sk: Optional[SigningKey] = None, did: Optional[str] = None
+) -> Optional[SigningKey]:
+    if did is None:
+        did = random().hex()
+    if sk is None:
+        sk = SigningKey.generate()
+        ret = True
+    else:
+        ret = False
     device = AddDevice(name, kind, did, sk)
     authority = Authority(account, sk)
     entry = Entry(device, authority, len(chain), chain.prev_hash)
@@ -151,7 +158,9 @@ def create_device_and_add_to_chain(chain: SigChain, name: str, account: str, kin
     chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
     kid = sk.verify_key.encode().hex()
     chain.devices[kid] = Device(did, kid, name, kind)
-    return sk
+    if ret:
+        return sk
+    return None
 
 
 def sign_kid_and_add_to_chain(chain: SigChain, kid: str, sk: SigningKey, account: str) -> None:

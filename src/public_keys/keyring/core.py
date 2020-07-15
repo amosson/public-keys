@@ -22,7 +22,7 @@ class Key:
 
 
 class Keyring(MutableMapping[KeyKind, List[Key]]):
-    def __init__(self, d: MutableMapping[KeyKind, List[Key]]) -> None:
+    def __init__(self, d: Optional[MutableMapping[KeyKind, List[Key]]] = None) -> None:
         ...  # pragma: no cover
 
     def lock(self, password: str) -> None:
