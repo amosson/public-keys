@@ -29,11 +29,31 @@ def test_associate_sigchain_no_device_signing() -> None:
     assert str(ex.value).endswith("no DEVICE SIGNING KEY")
 
 
+def test_associate_sigchain_no_encryption() -> None:
+    c = Client()
+    k = Key(KeyKind.DEVICE_SIGNING, random(), random())
+    p = Key(KeyKind.DEVICE_ENCRYPTION, random(), random())
+    c.keyring = InMemoryTestingRing()
+    c.keyring[KeyKind.DEVICE_SIGNING] = [k]
+    c.keyring[KeyKind.DEVICE_ENCRYPTION] = [p]
+    c.keyring = InMemoryTestingRing()
+
+    with pytest.raises(Exception):
+        c.associate_sigchain("hello")
+
+    c.keyring[KeyKind.DEVICE_ENCRYPTION] = []
+    with pytest.raises(Exception) as ex:
+        c.associate_sigchain("hello")
+    assert str(ex.value).endswith("no DEVICE ENCRYPTION KEY")
+
+
 def test_associate_signchain_existing_sigchain() -> None:
     c = Client()
     k = Key(KeyKind.DEVICE_SIGNING, random(), random())
+    p = Key(KeyKind.DEVICE_ENCRYPTION, random(), random())
     c.keyring = InMemoryTestingRing()
     c.keyring[KeyKind.DEVICE_SIGNING] = [k]
+    c.keyring[KeyKind.DEVICE_ENCRYPTION] = [p]
 
     c.sigchain = SigChain(create_store("@inmemory"))
 
@@ -45,8 +65,10 @@ def test_associate_signchain_existing_sigchain() -> None:
 def test_associate_sigchain_no_name() -> None:
     c = Client()
     k = Key(KeyKind.DEVICE_SIGNING, random(), random())
+    p = Key(KeyKind.DEVICE_ENCRYPTION, random(), random())
     c.keyring = InMemoryTestingRing()
     c.keyring[KeyKind.DEVICE_SIGNING] = [k]
+    c.keyring[KeyKind.DEVICE_ENCRYPTION] = [p]
 
     with pytest.raises(Exception) as ex:
         c.associate_sigchain("@inmemory")

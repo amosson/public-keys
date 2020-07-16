@@ -11,7 +11,9 @@ from nacl.signing import SigningKey  # type: ignore
 from nacl.utils import random  # type: ignore
 
 from public_keys.keyring.core import Key, KeyKind, Keyring
-from public_keys.sigchain.core import SigChain, create_device_and_add_to_chain
+from public_keys.sigchain.core import (SigChain,
+                                       create_device_and_add_to_chain,
+                                       sign_kid_and_add_to_chain)
 from public_keys.sigchain.stores import create_store
 
 DEVICE_SIG = b"Derived-Device-NaCl-EdDSA-1"
@@ -58,6 +60,11 @@ class Client:
                 sk = SigningKey(sks[-1].priv)
             else:
                 raise Exception("Trying to associate a sigchain to a client with no DEVICE SIGNING KEY")
+            eks = self.keyring[KeyKind.DEVICE_ENCRYPTION]
+            if eks is not None and len(eks):
+                pub_ek = eks[-1].pub.hex()
+            else:
+                raise Exception("Trying to associate a sigchain to a client with no DEVICE ENCRYPTION KEY")
 
         if self.sigchain is not None:
             raise Exception("Client already has a sigchain - can't associate a new one")
@@ -66,6 +73,7 @@ class Client:
 
             if self.name is not None and self.id is not None:
                 create_device_and_add_to_chain(self.sigchain, self.name, sigchain_loc, "DEVICE_SIG", sk, self.id)
+                sign_kid_and_add_to_chain(self.sigchain, pub_ek, sk, sigchain_loc, KeyKind.DEVICE_ENCRYPTION, self.id)
             else:
                 raise Exception("Trying to associate a sigchain to a client with no name or no id")
 

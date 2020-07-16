@@ -135,10 +135,13 @@ def test_associate_sigchain_file(monkeypatch) -> None:
 
         assert c.sigchain is not None
         assert c.keyring is not None
-        assert len(c.sigchain) == 1
+        assert len(c.sigchain) == 2
         assert len(c.sigchain.devices) == 1
         d = list(c.sigchain.devices.values())[0]
         assert d.device_id == c.id
+        assert d.encryption_key is not None
+        assert d.signing_kid is not None
+        assert d.signed_by_kid is None
         sk = c.keyring.get(KeyKind.DEVICE_SIGNING)
         assert sk is not None
 
@@ -166,7 +169,7 @@ def test_associate_sigchain_file_can_load_after_store(monkeypatch) -> None:
         c = bootstrap(sigchain_loc=sigchain_loc)
         assert c.id is not None
         assert c.sigchain is not None
-        assert len(c.sigchain) == 1
+        assert len(c.sigchain) == 2
         assert c.sigchain.store.location() == sigchain_loc
         assert (Path.home() / "sigchain").exists()
         assert c.keyring is not None
@@ -183,10 +186,14 @@ def test_associate_sigchain_file_can_load_after_store(monkeypatch) -> None:
         assert loaded.id == c.id
         assert loaded.sigchain is not None
 
-        assert len(loaded.sigchain) == 1
+        assert len(loaded.sigchain) == 2
         assert len(loaded.sigchain.devices) == 1
         d = list(loaded.sigchain.devices.values())[0]
         assert d.device_id == loaded.id
         assert loaded.keyring is not None
         sk = loaded.keyring.get(KeyKind.DEVICE_SIGNING)
         assert sk is not None
+        assert sk[-1].pub.hex() == d.signing_kid
+        ek = loaded.keyring.get(KeyKind.DEVICE_ENCRYPTION)
+        assert ek is not None
+        assert ek[-1].pub.hex() == d.encryption_key

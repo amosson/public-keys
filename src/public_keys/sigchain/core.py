@@ -9,6 +9,7 @@ from nacl.exceptions import BadSignatureError  # type: ignore
 from nacl.signing import SigningKey, VerifyKey  # type: ignore
 from nacl.utils import random  # type: ignore
 
+from public_keys.keyring.core import KeyKind
 from public_keys.sigchain.stores import Store
 
 
@@ -53,16 +54,20 @@ ADD_DEVICE_KEYS = set(["device_id", "kind", "name", "kid", "statement_type"])
 class SignedKid(Statement):
     signer: SigningKey
     kid: str
+    key_kind: KeyKind
+    extra: str
 
     def as_dict(self):
         signed_key = self.signer.sign(bytes(self.kid, "utf-8")).signature.hex()
         return {
             "kid": self.kid,
             "signed_kid": signed_key,
+            "key_kind": self.key_kind,
+            "extra": self.extra,
         }
 
 
-SIGNED_KID_KEYS = set(["kid", "signed_kid"])
+SIGNED_KID_KEYS = set(["kid", "signed_kid", "key_kind", "extra"])
 
 
 @dataclass
@@ -97,9 +102,13 @@ class SigChain:
                 stmt_keys = set(stmt.keys())
                 # Not using if ... elif ... because converage breaks - TODO: Fix this probably
                 if stmt_keys == ADD_DEVICE_KEYS:
-                    self.devices[stmt["kid"]] = Device(stmt["device_id"], stmt["kid"], stmt["name"], stmt["kind"])
-                if stmt_keys == SIGNED_KID_KEYS:
-                    self.devices[stmt["kid"]].signed_by_kid = entry_as_dict["authority"]["kid"]
+                    self.devices[stmt["device_id"]] = Device(
+                        stmt["device_id"], stmt["kid"], stmt["name"], stmt["kind"]
+                    )
+                if stmt_keys == SIGNED_KID_KEYS and stmt["key_kind"] == KeyKind.DEVICE_SIGNING:
+                    self.devices[stmt["extra"]].signed_by_kid = entry_as_dict["authority"]["kid"]
+                if stmt_keys == SIGNED_KID_KEYS and stmt["key_kind"] == KeyKind.DEVICE_ENCRYPTION:
+                    self.devices[stmt["extra"]].encryption_key = entry_as_dict["statement"]["kid"]
             else:
                 self.error_entry = entry
                 self.error_entry_as_dict = entry_as_dict
@@ -157,14 +166,16 @@ def create_device_and_add_to_chain(
     chain.data_chain.append(entry.as_dict())
     chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
     kid = sk.verify_key.encode().hex()
-    chain.devices[kid] = Device(did, kid, name, kind)
+    chain.devices[did] = Device(did, kid, name, kind)
     if ret:
         return sk
     return None
 
 
-def sign_kid_and_add_to_chain(chain: SigChain, kid: str, sk: SigningKey, account: str) -> None:
-    statement = SignedKid(sk, kid)
+def sign_kid_and_add_to_chain(
+    chain: SigChain, kid: str, sk: SigningKey, account: str, kind: KeyKind, extra: str
+) -> None:
+    statement = SignedKid(sk, kid, kind, extra)
     authority = Authority(account, sk)
     entry = Entry(statement, authority, len(chain), chain.prev_hash)
     signed = base64.b64encode(entry.sign()).decode()
@@ -173,7 +184,10 @@ def sign_kid_and_add_to_chain(chain: SigChain, kid: str, sk: SigningKey, account
     chain.raw_chain.append(signed)
     chain.data_chain.append(entry.as_dict())
     chain.prev_hash = hashlib.sha256(bytes(signed, "utf-8")).hexdigest()
-    chain.devices[kid].signed_by_kid = sk.verify_key.encode().hex()
+    if kind == KeyKind.DEVICE_SIGNING:
+        chain.devices[extra].signed_by_kid = sk.verify_key.encode().hex()
+    if kind == KeyKind.DEVICE_ENCRYPTION:
+        chain.devices[extra].encryption_key = kid
 
 
 class Entry:

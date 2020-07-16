@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import IntEnum
 from typing import List, MutableMapping, Optional
 
 
-class KeyKind(Enum):
+class KeyKind(IntEnum):
     UNKNOWN = 0
     DEVICE_SIGNING = 1
     DEVICE_ENCRYPTION = 2
