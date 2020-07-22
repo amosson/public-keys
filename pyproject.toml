@@ -13,6 +13,8 @@ python = "^3.8"
 pynacl = "^1.4.0"
 flake8-import-order = "^0.18.1"
 flake8-bugbear = "^20.1.4"
+saltpack = "^0.2.1"
+fusepy = "^3.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.3"
